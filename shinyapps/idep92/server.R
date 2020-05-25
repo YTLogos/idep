@@ -3,7 +3,7 @@
 # hosted at http://ge-lab.org/idep/
 # manuscript: https://www.biorxiv.org/content/early/2018/04/20/148411 
 
-iDEPversion = "iDEP 0.91"
+iDEPversion = "iDEP 0.92"
 
 ################################################################
 # R packages
@@ -90,7 +90,7 @@ maxSamplesEDAplot = 100  # max number of samples for EDA plots
 ################################################################
 
 # relative path to data files
-datapath = "../../data/data96/"   # production server
+datapath = "../../data/data100/"   # production server
 
 sqlite  <- dbDriver("SQLite")
 convert <- dbConnect( sqlite, paste0(datapath, "convertIDs.db"), flags=SQLITE_RO)  #read only mode

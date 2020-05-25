@@ -7,7 +7,8 @@ list.of.packages <- c(
   "ggplot2", "dplyr", #"tidyverse",
   "plotly",
   "e1071", "reshape2", "DT",
-  "data.table", "Rcpp","WGCNA","flashClust","statmod","biclust","igraph","Rtsne"
+  "data.table", "Rcpp","WGCNA","flashClust","statmod","biclust","igraph","Rtsne",
+  "visNetwork", "BiocManager"
 )
 
 list.of.bio.packages  <- c(
@@ -16,7 +17,7 @@ list.of.bio.packages  <- c(
   "PREDAsampledata", "sfsmisc", "lokern", "multtest", "hgu133plus2.db", 
    "org.Ag.eg.db","org.At.tair.db","org.Bt.eg.db","org.Ce.eg.db","org.Cf.eg.db",
    "org.Dm.eg.db","org.EcK12.eg.db","org.EcSakai.eg.db","org.Gg.eg.db",
-   "org.Hs.eg.db","org.Hs.ipi.db","org.Mm.eg.db","org.Mmu.eg.db","org.Pf.plasmo.db",
+   "org.Hs.eg.db","org.Mm.eg.db","org.Mmu.eg.db","org.Pf.plasmo.db",
    "org.Pt.eg.db","org.Rn.eg.db","org.Sc.sgd.db","org.Ss.eg.db","org.Xl.eg.db"
 )
 
@@ -46,8 +47,7 @@ while(notInstalledPackageCount != 0){
 
 	if(length(new.packages)) install.packages(new.packages, repos="http://cran.rstudio.com/", dependencies=TRUE, quiet=TRUE)
 	if(length(new.bio.packages)){
-	  source("https://bioconductor.org/biocLite.R")
-	  biocLite(new.bio.packages, suppressUpdates = T, quiet=TRUE)
+		BiocManager::install(new.bio.packages, ask = FALSE, dependencies=TRUE, quiet=TRUE)
 	}
 
 	new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]

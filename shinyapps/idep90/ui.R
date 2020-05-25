@@ -6,7 +6,7 @@ library(shiny,verbose=FALSE)
 library("shinyAce",verbose=FALSE) # for showing text files, code
 library(shinyBS,verbose=FALSE) # for popup figures
 library(plotly,verbose=FALSE)
-iDEPversion = "iDEP.90"
+iDEPversion = "iDEP.91"
 
 shinyUI(
 navbarPage(
@@ -100,8 +100,8 @@ iDEPversion,
       #,conditionalPanel(" input.goButton == 0 "
       ,h3("Loading R packages ... ... ...")
       ,htmlOutput('fileFormat')
-      #,h3("Service will not be available starting 6:30 am (US central time) on June 21 (Friday) 
-      #due to scheduled maintenance. It should take less than 45 minutes. ",  style = "color:red")
+      #,br(),br(),h3("Service will not be available from 8am (US central time) on December 18 (Wednesday), 2019  
+      # due to scheduled maintenance. It should take about 3 hours. ",  style = "color:red"),br(),br()
       #,h3("Send your letters before July 12th so we can include them in our proposal!  谢谢大家帮忙！ ご声援に感謝します！ 감사합니다. ", style = "color:blue")
      # ,h3("Less than 5% users sent us emails of support. 
      #     We are struggling to get funding to maintain and improve iDEP. 
@@ -113,8 +113,9 @@ iDEPversion,
      # ,a("Email",href="mailto:Xijin.Ge@SDSTATE.EDU?Subject=iDEP letter of support"), style = "color:red")
       #,h3("We are working on a plan to improve iDEP. Any new functionality or feature you like to be added? Please "
       #,a("send us",href="mailto:Xijin.Ge@SDSTATE.EDU?Subject=iDEP suggestions"), "your suggestions!",style = "color:red")      
-      ,h3("Thank you for your support letters!", style = "color:red")
-      ,h4("New! Massively upgraded annotation database! V0.90 includes 315 organisms in Ensembl release 96, 
+      #,h3("Thank you for your support letters!", style = "color:red")
+      ,h4("New 5/24/2020! Try out our new version 0.92, which is still in testing mode. While the code is not changed, the new version is based on Ensembl release 100 with more (392) species, updated annotaton, and many  manually collected pathways for 20 model organisms.", a("iDEP 0.92",href="http://bioinformatics.sdstate.edu/idep92/") )
+      ,h4("Massively upgraded annotation database! V0.90 includes 315 organisms in Ensembl release 96, 
           plus all species from STRINGdb (v10):115 archaeal, 1678 bacterial, and 238 eukaryotic species ")  
       ,h5("Now published on", a("BMC Bioinformatics!",href="https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-018-2486-6", target="_blank") )
       ,h5("Due to lack of funding, iDEP has not been thoroughly tested. Please let us know if you find any issue/bug.")
@@ -216,8 +217,11 @@ iDEPversion,
     
       mainPanel(
         h5("Aspect ratios of figures can be adjusted by changing the width of browser window.")
-        ,br(),br()
         ,conditionalPanel("input.dataFileFormat == 1", plotOutput("totalCounts") )
+        ,fluidRow( 
+          column(4, selectInput("scatterX", "Select a sample for x-axis", choices = 1:5, selected = 1))  
+          ,column(4, selectInput("scatterY", "Select a sample for y-axis", choices = 1:5, selected = 2) )
+          ) 
         ,plotOutput("EDA")
         ,bsModal("modalExample10", "Converted data (Most variable genes on top)", 
                  "examineDataB", size = "large", DT::dataTableOutput('examineData'))
@@ -455,11 +459,21 @@ iDEPversion,
       # main Panel of PCA ------------------------------------------------------------------------------
       mainPanel(
         plotOutput("PCA", inline=TRUE)
+        ,conditionalPanel("input.PCA_MDS == 1", # only show if t-SNE
+          fluidRow( 
+            column(4, selectInput("PCAx", "Principal component for x-axis", choices = 1:5, selected = 1))  
+            ,column(4, selectInput("PCAy", "Principal component for y-axis", choices = 1:5, selected = 2) )
+          ) )
+#        ,tags$style(type='text/css', "#PCAx { width:100%;   margin-top:-12px}") 
+#        ,tags$style(type='text/css', "#FirstPCA { width:100%;   margin-top:-12px}")    
+        ,br()
         ,conditionalPanel("input.PCA_MDS == 4", # only show if t-SNE
           actionButton("tsneSeed2", "Re-calculate t-SNE"),br(),br() )
-        ,br(),br()
+        
         ,conditionalPanel("input.PCA_MDS == 1 |input.PCA_MDS == 2 " # only show if PCA or MDS (not pathway)
-          ,htmlOutput('PCA2factor') )
+          ,htmlOutput('PCA2factor')
+          ,br(),br() )
+         
       
       ) # mainPanel
     )  #sidebarLayout     
@@ -510,8 +524,9 @@ iDEPversion,
         ,br(),fluidRow(          
         column(8, downloadButton('downloadGeneListsGMT', 'Gene lists') ) )
         ,br()
+# the fold change data is wrong when using LIMMA from DEG1 tab
         ,fluidRow(
-           column(8, downloadButton('download.DEG.data', 'FDR & fold-changes for all genes') )
+           column(8, downloadButton('download.DEG.data', 'FDR & fold-changes for all genes(Only use with DESeq2) ') )
         )
         ,downloadButton('downloadSigGeneStats', 'Figure')
         ,br(),h4( textOutput("textLimma") )
@@ -1211,6 +1226,7 @@ iDEPversion,
        ,h5("3/5/2019:  v0.82 Fix a bug regarding limma for identification of D.E.Gs. Up- and down-regulation are opposite in some cases.")
        ,h5("3/29/2019: v0.85 Annotation database upgrade. Ensembl v 95. Ensembl plants v.42, and Ensembl Metazoa v.42.")
        ,h5("5/19/2019: v0.90 Annotation database upgrade. Ensembl v 96. Ensembl plants v.43, and Ensembl Metazoa v.43. STRING-db v10")
+       ,h5("2/3/2020: v0.90 customizable PCA plot and scatter plot")
        ,br(),br()
        ,h5("In loving memory of my parents. X.G.")
 

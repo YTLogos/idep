@@ -6,7 +6,7 @@ library(shiny,verbose=FALSE)
 library("shinyAce",verbose=FALSE) # for showing text files, code
 library(shinyBS,verbose=FALSE) # for popup figures
 library(plotly,verbose=FALSE)
-iDEPversion = "iDEP.85"
+iDEPversion = "iDEP.92"
 
 shinyUI(
 navbarPage(
@@ -30,33 +30,17 @@ iDEPversion,
                                  }"))                    
       ,h5(" and just click the tabs for some magic!", style = "color:red")
       ,p(HTML("<div align=\"right\"> <A HREF=\"javascript:history.go(0)\">Reset</A></div>" ))
-      ,radioButtons("dataFileFormat", 
-                     label = "1. Choose data type", 
-                     choices = list("Read counts data (recommended)"                                          = 1, 
-                                     "Normalized expression values (RNA-seq FPKM, microarray, etc.)"          = 2,
-                                     "Fold-changes and corrected P values from CuffDiff or any other program" = 3),
-                     selected = 1
-      )      
-      ,conditionalPanel("input.dataFileFormat == 3",
-        checkboxInput("noFDR", "Fold-changes only, no corrected P values", value = FALSE)
-      )
-      
-      ,fileInput('file1', '2. Upload expression data (CSV or text)',
-                  accept = c(
-                    'text/csv',
-                    'text/comma-separated-values',
-                    'text/tab-separated-values',
-                    'text/plain',
-                    '.csv',
-                    '.tsv'          
-                  ) 
-      ),
-      a("New! Analyze public RNA-seq data", href="http://bioinformatics.sdstate.edu/reads/"),
-      actionButton("btnStartExpDesign", "Experiment Design"),
-
-      h5(strong("3. Verify guessed species. Change if neccessary.")),
-      selectInput("selectOrg", label = NULL,"Best matching species",width='100%') 
-        
+      ,strong("1. Select or search for your species.")
+      #,selectInput("selectOrg", label = NULL,"Best matching species",width='100%') 
+                      ,selectizeInput('selectOrg', 
+                                  label    = NULL,
+                                  choices  = " ",
+                                  multiple = TRUE,
+                                  options  = list( maxItems     = 1,               
+                                                   placeholder  = 'Best matching species',
+                                                   onInitialize = I('function() { this.setValue(""); }'))  
+                                  #,selected = "Best matching species"                                                  
+                         )    
       ,conditionalPanel("input.selectOrg == 'NEW'",
         fileInput('gmtFile', 'Upload a geneset .GMT file for enrichment analysis (optional)',
                   accept = c(
@@ -71,6 +55,39 @@ iDEPversion,
         )
       ) # conditionalPanel
 
+
+      ,radioButtons("dataFileFormat", 
+                     label = "2. Choose data type", 
+                     choices = list("Read counts data (recommended)"                                          = 1, 
+                                     "Normalized expression values (RNA-seq FPKM, microarray, etc.)"          = 2,
+                                     "Fold-changes and corrected P values from CuffDiff or any other program" = 3),
+                     selected = 1
+      )      
+      ,conditionalPanel("input.dataFileFormat == 3",
+        checkboxInput("noFDR", "Fold-changes only, no corrected P values", value = FALSE)
+      )
+      
+      ,fileInput('file1', '3. Upload expression data (CSV or text)',
+                  accept = c(
+                    'text/csv',
+                    'text/comma-separated-values',
+                    'text/tab-separated-values',
+                    'text/plain',
+                    '.csv',
+                    '.tsv'          
+                  ) 
+      )
+      ,a(h4("Analyze public RNA-seq datasets for 9 species"), href="http://bioinformatics.sdstate.edu/reads/")
+      ,fileInput('file2', h5('Optional: Upload an experiment design file(CSV or text)'),
+                  accept = c(
+                    'text/csv',
+                    'text/comma-separated-values',
+                    'text/tab-separated-values',
+                    'text/plain',
+                    '.csv',
+                    '.tsv'          
+                  )
+      )
       ,tableOutput('species' )
       ,a( h5("?",align = "right"), href="https://idepsite.wordpress.com/data-format/",target="_blank")
                                                                                        # new window
@@ -80,98 +97,32 @@ iDEPversion,
     mainPanel(  
       tableOutput('sampleInfoTable')
       ,tableOutput('contents')
-
-      #,h3("Service will not be available starting 6:30 am (US central time) on June 21 (Friday) 
-      #due to scheduled maintenance. It should take less than 45 minutes. ",  style = "color:red")
-      #,h3("We will re-sbumit our grant proposal to NIH. If you didn't send us a support letter last time, 
-      #    please consider sending us a brief email/letter before Nov. 15th, with your 
-      #    broad area of research and how iDEP helps your work. Thanks!"
-      #,a("Email",href="mailto:Xijin.Ge@SDSTATE.EDU?Subject=iDEP suggestions"), style = "color:red")
-      ,h3("We are working on a plan to improve iDEP. Any new functionality or feature you like to be added? Please "
-      ,a("send us",href="mailto:Xijin.Ge@SDSTATE.EDU?Subject=iDEP suggestions"), "your suggestions!",style = "color:red")      
-      ,br(),img(src='flowchart.png', align = "center",width="562", height="383")
-      ,h5("New! V0.85 now uses updated annotation databases based on 148 genomes in Ensembl release 95, 
-           58  species from Ensembl Plants release 42, and 72 species in Ensembl Metazoa release 42.")
-      ,h5("v0.82 fixed a major bug. When using limma, the up- and down-regulation is reversed in some situations.",style = "color:red")
+      #,conditionalPanel(" input.goButton == 0 "
+      ,h3("Loading R packages ... ... ...")
+      ,htmlOutput('fileFormat')
+      #,br(),br(),h3("Service will not be available from 8am (US central time) on December 18 (Wednesday), 2019  
+      # due to scheduled maintenance. It should take about 3 hours. ",  style = "color:red"),br(),br()
+      #,h3("Send your letters before July 12th so we can include them in our proposal!  谢谢大家帮忙！ ご声援に感謝します！ 감사합니다. ", style = "color:blue")
+     # ,h3("Less than 5% users sent us emails of support. 
+     #     We are struggling to get funding to maintain and improve iDEP. 
+     #     Reviewers said iDEP is not useful and other tools exist. 
+     #      iDEP is designed to help small labs make sense of transcriptomes. 
+     #      Please send us a brief email today to support our grant proposal, indicating  your 
+     #     broad area of research and how iDEP helps your work. 
+     #    All letters count, even from graduate students in another country. Thanks!"
+     # ,a("Email",href="mailto:Xijin.Ge@SDSTATE.EDU?Subject=iDEP letter of support"), style = "color:red")
+      #,h3("We are working on a plan to improve iDEP. Any new functionality or feature you like to be added? Please "
+      #,a("send us",href="mailto:Xijin.Ge@SDSTATE.EDU?Subject=iDEP suggestions"), "your suggestions!",style = "color:red")      
+      #,h3("Thank you for your support letters!", style = "color:red")
+      ,h4("New! V0.92 includes a large collection of pathway data for 20 model organisms, plus the new Ensembl release 100 
+with 203 species in Ensembl, 80 in Ensembl Plants and 110 in Ensembl Metazoa. 
+           We are still working on adding annotation from STRINGdb (v11).  ")  
       ,h5("Now published on", a("BMC Bioinformatics!",href="https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-018-2486-6", target="_blank") )
       ,h5("Due to lack of funding, iDEP has not been thoroughly tested. Please let us know if you find any issue/bug.")
-      ,h5("v0.81 Enabled downloading of publication-ready vector graphics files using EPS.")
-      ,h5("New v0.80  Updated annotation database. Comprehensive pathway 
-          database for human. TF binding motifs for 200+ speceis. Old version made available."
-      )
-      ,h5("New v0.70  iDEP generates R and R Markdown codes for users to run in stand-alone!")
-      ,a("R Markdown example.",align = "left", href="http://rpubs.com/ge600/R",target="_blank")
-      ,h5("New v0.68! Try the STRING-db API access on the DEG2 page that offer 
-          protein interaction networks and GO enrichment for thousands species, including bacteria.")
-      ,h5("Integrated Differential Expression and Pathway analysis (iDEP)
-          of transcriptomic data.  See ",
-        a(" documentation", href="https://idepsite.wordpress.com/", target="_blank"), 
-        "and",
-        a(" paper.", href="https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-018-2486-6",target="_blank"),
-        "Based on annotation of",
-        a( "215 animal and 58 plant genomes ",href="https://idepsite.wordpress.com/species/",target="_blank"), 
-        "in Ensembl BioMart as of 12/15/2017."
-        ,a("STRING-db ", href="https://string-db.org/",target="_blank")
-        ,"offer API access to protein interaction networks and annotations 
-        for 115 archaeal, 1678 bacterial, and 238 eukaryotic species."
-        ," Additional  data from"
-        ,a("KEGG, ", href="www.genome.jp/kegg/",target="_blank")
-        ,a("Reactome, ", href="http://www.reactome.org/",target="_blank")
-        ,a("MSigDB (human),", href="https://doi.org/10.1093/bioinformatics/btr260",target="_blank") 
-        ,a("GSKB (mouse)", href="http://biorxiv.org/content/early/2016/10/24/082511",target="_blank") 
-        ,"and"
-        ,a("  araPath (arabidopsis).", href="https://doi.org/10.1093/bioinformatics/bts421", target="_blank")   
-        ," For feedbacks or data contributions (genes and GO mapping of any species), please"
-        ,a("contact us, ",href="mailto:xijin.ge@sdstate.edu?Subject=iDEP" )
-        ,"or visit our",a(" homepage.", href="http://ge-lab.org/",target="_blank")
-        ,"Send us suggestions or any error message to help improve iDEP."
-        ,a("Email",href="mailto:Xijin.Ge@SDSTATE.EDU?Subject=iDEP suggestions")
-      ) #h5
-      ,h3("Loading R packages ... ...")
-      ,htmlOutput('fileFormat'),
-      bsModal(
-          "popDesignFile",
-          "Generate Design File",
-          "btnStartExpDesign",
-          size = "large",
-          fluidPage(
-            textOutput('txtSampleCount'),
-            conditionalPanel(
-                condition = 'output.file1IsUploaded',
-                radioButtons(
-                'selectDesignSource', 
-                '',
-                c(
-                    'Upload an experiment design' = 'upload',
-                    'Generate a design file' = 'generate'
-                )
-            ),
-            conditionalPanel(
-                condition = 'input.selectDesignSource == "upload"',
-                fileInput('file2', h5('Optional: Upload an experiment design file(CSV or text)'),
-                  accept = c(
-                    'text/csv',
-                    'text/comma-separated-values',
-                    'text/tab-separated-values',
-                    'text/plain',
-                    '.csv',
-                    '.tsv'          
-                  )
-                ),
-            ),
-            conditionalPanel(
-                condition = 'input.selectDesignSource == "generate"',
-                h5('Please tell us your factors(Genotype, Treatment) and their values(Wildtype/Mutant, Treat/NonTreat). '),
-                textInput('txtVariables', 'Controlled variables: '),
-                uiOutput('uiVarValue'),
-                uiOutput('uiSamples'),
-                downloadButton('downloadDesignFile', 'Generate, use and download design file')
-            )
+      ,h5("We are happy to help prepare your data for iDEP. Dr. Ge is also open to bioinformatics consulting during the summer.")
+      ,br(),img(src='flowchart.png', align = "center",width="562", height="383")
+     # ) # conditionalPanel
 
-            )            
-            
-          )
-        )
     ) # main panel
   ) #sidebarLayout
 ) #tabPanel
@@ -206,7 +157,7 @@ iDEPversion,
 
     ) # conditionalPanel
 
-    
+   
     # If read count data
         ,conditionalPanel("input.dataFileFormat == 1",            
           strong("Keep genes with minimal counts per million (CPM) in at least n libraries:")
@@ -266,8 +217,11 @@ iDEPversion,
     
       mainPanel(
         h5("Aspect ratios of figures can be adjusted by changing the width of browser window.")
-        ,br(),br()
         ,conditionalPanel("input.dataFileFormat == 1", plotOutput("totalCounts") )
+        ,fluidRow( 
+          column(4, selectInput("scatterX", "Select a sample for x-axis", choices = 1:5, selected = 1))  
+          ,column(4, selectInput("scatterY", "Select a sample for y-axis", choices = 1:5, selected = 2) )
+          ) 
         ,plotOutput("EDA")
         ,bsModal("modalExample10", "Converted data (Most variable genes on top)", 
                  "examineDataB", size = "large", DT::dataTableOutput('examineData'))
@@ -505,11 +459,21 @@ iDEPversion,
       # main Panel of PCA ------------------------------------------------------------------------------
       mainPanel(
         plotOutput("PCA", inline=TRUE)
+        ,conditionalPanel("input.PCA_MDS == 1", # only show if t-SNE
+          fluidRow( 
+            column(4, selectInput("PCAx", "Principal component for x-axis", choices = 1:5, selected = 1))  
+            ,column(4, selectInput("PCAy", "Principal component for y-axis", choices = 1:5, selected = 2) )
+          ) )
+#        ,tags$style(type='text/css', "#PCAx { width:100%;   margin-top:-12px}") 
+#        ,tags$style(type='text/css', "#FirstPCA { width:100%;   margin-top:-12px}")    
+        ,br()
         ,conditionalPanel("input.PCA_MDS == 4", # only show if t-SNE
           actionButton("tsneSeed2", "Re-calculate t-SNE"),br(),br() )
-        ,br(),br()
+        
         ,conditionalPanel("input.PCA_MDS == 1 |input.PCA_MDS == 2 " # only show if PCA or MDS (not pathway)
-          ,htmlOutput('PCA2factor') )
+          ,htmlOutput('PCA2factor')
+          ,br(),br() )
+         
       
       ) # mainPanel
     )  #sidebarLayout     
@@ -560,8 +524,9 @@ iDEPversion,
         ,br(),fluidRow(          
         column(8, downloadButton('downloadGeneListsGMT', 'Gene lists') ) )
         ,br()
+# the fold change data is wrong when using LIMMA from DEG1 tab
         ,fluidRow(
-           column(8, downloadButton('download.DEG.data', 'FDR & fold-changes for all genes') )
+           column(8, downloadButton('download.DEG.data', 'FDR & fold-changes for all genes(Only use with DESeq2) ') )
         )
         ,downloadButton('downloadSigGeneStats', 'Figure')
         ,br(),h4( textOutput("textLimma") )
@@ -1162,9 +1127,13 @@ iDEPversion,
       column(12,
         h4( a("Email us", href= "mailto:Xijin.Ge@SDSTATE.EDU?Subject=iDEP", target="_top") , 
            " for questions, suggestions, or data contributions. Stay connected via ", 
-           a("user group,", href="https://groups.google.com/d/forum/idep",target="_blank"),
-           " ", a("GitHub,", href="https://github.com/iDEP-SDSU/idep", target="_blank"),
-           " or ",a("Twitter.", href="https://twitter.com/useIDEP", target="_blank") ),
+           a("user group", href="https://groups.google.com/d/forum/idep",target="_blank"),
+           " or ",a("Twitter.", href="https://twitter.com/StevenXGe", target="_blank"),
+           " Visit our ", a("GitHub", href="https://github.com/iDEP-SDSU/idep", target="_blank"), 
+           " page to see source code, install a local version, or report bugs and request features.", 
+           "iDEP is being developed by a very small team: Dr. Xijin Ge and a graduate student ",
+           a("(Homepage).", href="http://ge-lab.org/")
+           ),
         h2("R as in Reproducibility"),
         
         h5(a("Documentation site.",href="https://idepsite.wordpress.com/", target="_blank"),
@@ -1198,6 +1167,9 @@ iDEPversion,
                           ,"Experiment design file"))
         ,br()
         ,h4("Previous versions of iDEP")
+        ,a("iDEP 0.85 with Ensembl 95, archived on May 19, 2019 "
+           , href="http://bioinformatics.sdstate.edu/idep85/")  
+        ,br()
         ,a("iDEP 0.82 with Ensembl BioMart version 92, archived on March 29, 2019 "
            , href="http://bioinformatics.sdstate.edu/idep82/")  
         ,br()
@@ -1209,10 +1181,10 @@ iDEPversion,
             expression and pathway analysis of RNA-Seq data. BMC Bioinformatics 2018, 19(1):534. PMID:30567491 ",
             a(" Full text",href="https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-018-2486-6", target="_blank"))
         ,h4("Usage Statistics")
-        ,h5("As of Feb. 8, 2019, iDEP website has been visited 16,344 times by 4,500 users from 80 countries. 
+        ,h5("As of June 5, 2019, iDEP website has been visited 30,895 times by 8,252 users from 91 countries. 
             Fully functional only in early 2018, iDEP has been used by researchers to analyze transcriptomic data 
             from sun flowers to primates to human, 
-            as demonstrated by 12 papers citing iDEP.")
+            as demonstrated by the 22 papers citing iDEP.")
        ,br()  
        ,htmlOutput('RsessionInfo')
 
@@ -1253,8 +1225,10 @@ iDEPversion,
        ,h5("12/2/2018: v0.81 High resolution figure download with eps format, which can be eidted with Adobe Illustrator.")
        ,h5("3/5/2019:  v0.82 Fix a bug regarding limma for identification of D.E.Gs. Up- and down-regulation are opposite in some cases.")
        ,h5("3/29/2019: v0.85 Annotation database upgrade. Ensembl v 95. Ensembl plants v.42, and Ensembl Metazoa v.42.")
+       ,h5("5/19/2019: v0.90 Annotation database upgrade. Ensembl v 96. Ensembl plants v.43, and Ensembl Metazoa v.43. STRING-db v10")
+       ,h5("2/3/2020: v0.90 customizable PCA plot and scatter plot")
        ,br(),br()
-       ,h5("In loving memory of my parents.")
+       ,h5("In loving memory of my parents. X.G.")
 
        ) #column
      ) # fluidRow
